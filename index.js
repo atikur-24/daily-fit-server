@@ -29,6 +29,7 @@ async function run() {
     const database = client.db("dailyFitDB");
     // const userCollection = database.collection("users");
     const classCollection = database.collection("classes");
+    const instructorCollection = database.collection("instructors");
     // const reviewCollection = database.collection("reviews");
     // const cartCollection = database.collection("carts");
 
@@ -82,6 +83,11 @@ async function run() {
     // classes related apis
     app.get('/classes', async(req, res) => {
       const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+    // classes related apis
+    app.get('/instructors', async(req, res) => {
+      const result = await instructorCollection.find().toArray();
       res.send(result);
     });
 
