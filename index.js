@@ -27,12 +27,24 @@ async function run() {
     await client.connect();
 
     const database = client.db("dailyFitDB");
-    // const userCollection = database.collection("users");
+    const userCollection = database.collection("users");
     const classCollection = database.collection("classes");
     const instructorCollection = database.collection("instructors");
     // const reviewCollection = database.collection("reviews");
     // const cartCollection = database.collection("carts");
 
+
+    // user(students,instructors, admin) related apis
+    app.post('/users', async(req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if(existingUser) {
+        return res.send({ message: 'User already exists' });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result)
+    });
 
 /*     // user related apis
     app.get('/users', async(req, res) => {
