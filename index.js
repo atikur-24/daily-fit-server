@@ -35,6 +35,11 @@ async function run() {
 
 
     // user(students,instructors, admin) related apis
+    app.get('/users', async(req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
     app.post('/users', async(req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -46,11 +51,29 @@ async function run() {
       res.send(result)
     });
 
-    app.get('/users', async(req, res) => {
-      const result = await userCollection.find().toArray();
+    app.patch('/users/admin/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        }
+      }
+      const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
+    app.patch('/users/instructor/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        }
+      }
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
     
     app.delete('/users/:id', async(req, res) => {
       const id = req.params.id;
@@ -58,17 +81,6 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
-
-/*     app.post('/users', async(req, res) => {
-      const user = req.body;
-      const query = { email: user.email }
-      const existingUser = await userCollection.findOne(query);
-      if(existingUser) {
-        return res.send({ message: 'User already exists'})
-      }
-      const result = await userCollection.insertOne(user);
-      res.send(result);
-    }); */
 
 /*     app.get('/users/admin/:email', async(req, res) => {
       const email = req.params.email;
@@ -78,18 +90,6 @@ async function run() {
       const query = { email: email };
       const user = await userCollection.findOne(query);
       const result = { admin : user?.role === 'admin' }
-      res.send(result);
-    }) */
-
-/*     app.patch('/users/admin/:id', async(req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          role: 'admin'
-        }
-      }
-      const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     }) */
     
@@ -103,13 +103,6 @@ async function run() {
       const result = await instructorCollection.find().toArray();
       res.send(result);
     });
-
-
-/*     // review related apis
-    app.get('/reviews', async(req, res) => {
-      const result = await reviewCollection.find().toArray();
-      res.send(result);
-    }); */
 
 
 /*     // cart related apis
