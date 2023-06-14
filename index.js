@@ -75,7 +75,7 @@ async function run() {
       res.send(result);
     });
 
-    // instructor api
+    // specific role: instructor api
     app.get('/users/instructor', async(req, res) => {
       const query = { role: 'instructor' }
       const result = await userCollection.find(query).toArray();
@@ -153,6 +153,42 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/classes', verifyJWT, async(req, res) => {
+      const email = req.query.email;
+      if(!email) {
+        res.send([])
+      }
+      const decodedEmail = req.decoded.email
+      if(email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'Forbidden access'});
+      }
+      const query = { email: email };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // app.get('/classes', async(req, res) => {
+    //   let query = {};
+    //   if(req.query?.email) {
+    //     query = {email: req.query?.email}
+    //   }
+    //   const result = await classCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+
+    app.post('/classes', async(req, res) => {
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
+      res.send(result);
+    });
+
+    app.delete('/classes/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.deleteOne(query);
+      res.send(result);
+    });
+
 
     // carts related apis
     app.get('/carts', verifyJWT, async(req, res) => {
@@ -181,6 +217,7 @@ async function run() {
       const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
+
 
     // review related apis
     app.get('/reviews', async(req, res) => {
