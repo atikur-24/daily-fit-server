@@ -47,32 +47,38 @@ async function run() {
     const database = client.db("dailyFitDB");
     const userCollection = database.collection("users");
     const classCollection = database.collection("classes");
-    const instructorCollection = database.collection("instructors");
     const cartCollection = database.collection("carts");
+    const reviewCollection = database.collection("reviews");
 
+    // jwt
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign( user , process.env.ACCESS_SECRET_KEY, { expiresIn: '1h'} );
+      res.send(token);
+    })
 
-        // jwt
-        app.post('/jwt', (req, res) => {
-          const user = req.body;
-          const token = jwt.sign( user , process.env.ACCESS_SECRET_KEY, { expiresIn: '1h'} );
-          res.send(token);
-        })
-    
-        // Warning: user verifyJWT before using verifyAdmin
-        const verifyAdmin = async(req, res, next) => {
-          const email = req.decoded.email;
-          const query = { email: email };
-          const user = await userCollection.findOne(query);
-          if(user?.role !== 'admin') {
-            return res.status(403).send({error: true, message: 'Forbidden message'})
-          }
-          next();
-        }
+    // Warning: user verifyJWT before using verifyAdminInstructor
+    const verifyAdminInstructor = async(req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if(user?.role !== 'admin' && 'instructor') {
+        return res.status(403).send({error: true, message: 'Forbidden message'})
+      }
+      next();
+    }
 
 
     // user(students,instructors, admin) related apis
-    app.get('/users', verifyJWT, verifyAdmin, async(req, res) => {
+    app.get('/users', verifyJWT, verifyAdminInstructor, async(req, res) => {
       const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    // instructor api
+    app.get('/users/instructor', async(req, res) => {
+      const query = { role: 'instructor' }
+      const result = await userCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -85,7 +91,18 @@ async function run() {
       const user = await userCollection.findOne(query);
       const result = { admin : user?.role === 'admin' }
       res.send(result);
-    })
+    });
+
+    app.get('/users/instructor/:email', verifyJWT, async(req, res) => {
+      const email = req.params.email;
+      if(req.decoded.email !== email) {
+        return res.send({ instructor: false })
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const result = { instructor : user?.role === 'instructor' }
+      res.send(result);
+    });
 
     app.post('/users', async(req, res) => {
       const user = req.body;
@@ -128,19 +145,16 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
-    
+
+
     // classes related apis
     app.get('/classes', async(req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
-    // instructor related apis
-    app.get('/instructors', async(req, res) => {
-      const result = await instructorCollection.find().toArray();
-      res.send(result);
-    });
 
+    // carts related apis
     app.get('/carts', verifyJWT, async(req, res) => {
       const email = req.query.email;
       if(!email) {
@@ -165,6 +179,12 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // review related apis
+    app.get('/reviews', async(req, res) => {
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     });
 
