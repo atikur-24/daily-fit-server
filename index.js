@@ -153,6 +153,14 @@ async function run() {
       res.send(result);
     });
 
+    // status: approved api
+    app.get('/classes/approved', async(req, res) => {
+      const query = { status: 'approved' }
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // TODO
     app.get('/classes', verifyJWT, async(req, res) => {
       const email = req.query.email;
       if(!email) {
@@ -167,6 +175,7 @@ async function run() {
       res.send(result);
     });
 
+    // TODO(option)
     // app.get('/classes', async(req, res) => {
     //   let query = {};
     //   if(req.query?.email) {
@@ -182,13 +191,36 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/classes/approved/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        }
+      }
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.patch('/classes/denied/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'denied'
+        }
+      }
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     app.delete('/classes/:id', async(req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await classCollection.deleteOne(query);
       res.send(result);
     });
-
 
     // carts related apis
     app.get('/carts', verifyJWT, async(req, res) => {
