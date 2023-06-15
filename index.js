@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -160,30 +161,15 @@ async function run() {
       res.send(result);
     });
 
-    // TODO
-    app.get('/classes', verifyJWT, async(req, res) => {
-      const email = req.query.email;
+    app.get('/classes/:email', verifyJWT, async(req, res) => {
+      const email = req.params.email;
       if(!email) {
         res.send([])
-      }
-      const decodedEmail = req.decoded.email
-      if(email !== decodedEmail) {
-        return res.status(403).send({ error: true, message: 'Forbidden access'});
       }
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
     });
-
-    // TODO(option)
-    // app.get('/classes', async(req, res) => {
-    //   let query = {};
-    //   if(req.query?.email) {
-    //     query = {email: req.query?.email}
-    //   }
-    //   const result = await classCollection.find(query).toArray();
-    //   res.send(result);
-    // });
 
     app.post('/classes', async(req, res) => {
       const newClass = req.body;
@@ -212,6 +198,20 @@ async function run() {
         }
       }
       const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.put('/classes/:id', async(req, res) => {
+      const id = req.params.id;
+      const feedback = req.body;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedback: feedback.message
+        },
+      };
+      const result = await classCollection.updateOne(query, updateDoc, options);
       res.send(result);
     });
 
@@ -256,6 +256,22 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
+
+
+    // create payment intent
+    app.post('/create-payment-intent', async(req, res) => {
+      const { price } = req.body;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      })
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
