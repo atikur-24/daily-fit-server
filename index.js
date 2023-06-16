@@ -157,8 +157,12 @@ async function run() {
 
     // status: approved api
     app.get('/classes/approved', async(req, res) => {
+      const options = {
+        // sort matched documents in descending order by enrolled_students
+        sort: { "enrolled_students": 1 },
+      };
       const query = { status: 'approved' }
-      const result = await classCollection.find(query).toArray();
+      const result = await classCollection.find(query, options).toArray();
       res.send(result);
     });
 
@@ -288,6 +292,16 @@ async function run() {
     app.post('/payments', verifyJWT, async(req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
+
+      const program = await classCollection.findOne({ _id: new ObjectId(payment.programId) })
+      const available_seats = program.available_seats - 1
+      const enrolled_students = program.enrolled_students + 1
+      const updatedProgram = await classCollection.updateOne({ _id: new ObjectId(payment.programId) }, {
+        $set: {
+          available_seats,
+          enrolled_students
+        }
+      })
 
       const query = { _id: new ObjectId(payment._id) }
       const deleteResult = await cartCollection.deleteOne(query)
