@@ -275,12 +275,24 @@ async function run() {
 
 
     // payment related apis
+    app.get('/payments/:email', verifyJWT, async(req, res) => {
+      const email = req.params.email;
+      if(!email) {
+        res.send([])
+      }
+      const query = { email: email };
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post('/payments', verifyJWT, async(req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
 
-    
-      res.send( insertResult );
+      const query = { _id: new ObjectId(payment._id) }
+      const deleteResult = await cartCollection.deleteOne(query)
+
+      res.send({ insertResult, deleteResult });
     });
 
     // Send a ping to confirm a successful connection
