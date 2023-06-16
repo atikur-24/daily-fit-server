@@ -159,7 +159,7 @@ async function run() {
     app.get('/classes/approved', async(req, res) => {
       const options = {
         // sort matched documents in descending order by enrolled_students
-        sort: { "enrolled_students": 1 },
+        sort: { "enrolled_students": -1 },
       };
       const query = { status: 'approved' }
       const result = await classCollection.find(query, options).toArray();
